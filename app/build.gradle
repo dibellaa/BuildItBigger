@@ -25,12 +25,55 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            applicationIdSuffix ".debug"
+        }
     }
+
+    flavorDimensions 'default'
+    productFlavors {
+        free {
+            applicationIdSuffix ".free"
+        }
+        paid {
+            applicationIdSuffix ".paid"
+        }
+    }
+    android.variantFilter { variant ->
+        if (variant.buildType.name.equals('release')
+                && variant.getFlavors().get(0).name.equals('free')) {
+            variant.setIgnore(true);
+        }
+    }
+}
+
+task testProject {
+    dependsOn(['startLocalServer','runMyTests','stopLocalServer'])
+}
+
+task startLocalServer {
+    dependsOn ':backend:appengineStart'
+}
+
+task runMyTests {
+    dependsOn ':app:connectedAndroidTest'
+    mustRunAfter "startLocalServer"
+}
+
+task stopLocalServer {
+    dependsOn ':backend:appengineStop'
+    mustRunAfter "runMyTests"
+
 }
 
 dependencies {
@@ -50,4 +93,6 @@ dependencies {
     })
 
     testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test:rules:1.0.1'
 }
